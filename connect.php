@@ -15,7 +15,7 @@ if (!isset($_GET['id']) && empty($_GET['id'])) { ?>
 else {
 $unqid = $_SESSION["uid"];
 $cryptid = $_SESSION["cid"];
-$conn = new mysqli("localhost", "root", "", "acs_draft1");
+$conn = new mysqli("localhost", "root", "", "linearsmart");
 
 
 if ($conn->connect_error) {

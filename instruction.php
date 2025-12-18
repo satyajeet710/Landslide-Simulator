@@ -88,7 +88,7 @@ $know = test_input($_POST['know']);
     }
     $unqid = $_SESSION['uid'];
     $_SESSION['name'] = 'Guest';
-    $conn = new mysqli("localhost", "root", "","acs_draft1");
+    $conn = new mysqli("localhost", "root", "","linearsmart");
     $sql = "INSERT INTO demographic (id, Age, Gender, Education, Occupation, Major, Email, city_belong_to, liveno_currently_live, live_long, livereason, dwell_type, household_size, owner, source_of_income, income, knowledge) 
 VALUES ('$unqid','$age','$gender','$ed','$occ','$major','$email','$city','$live','$live_long','$livereason','$dwell','$household','$owner','$source','$income','$know')";
 if ($conn->query($sql) === TRUE) 

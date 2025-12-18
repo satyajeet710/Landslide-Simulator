@@ -1,7 +1,7 @@
 <?php
     session_start();
     error_reporting(0);
-    $conn = new mysqli("localhost", "root", "", "acs_draft1");
+    $conn = new mysqli("localhost", "root", "", "linearsmart");
     $sqlsno = "SELECT scenario_id FROM param";
     $result = mysqli_query($conn,$sqlsno);
  $row = mysqli_fetch_array($result,MYSQLI_NUM);

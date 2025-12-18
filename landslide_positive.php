@@ -27,7 +27,7 @@ foreach($required_sessions as $sess) {
 }
 
 // Initialize database connection
-$conn = new mysqli("localhost", "root", "", "acs_draft1");
+$conn = new mysqli("localhost", "root", "", "linearsmart");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -127,7 +127,7 @@ echo "<p>Thus, your property wealth was not affected and stays at the same value
                 <div class="row">
                 <?php
                 //code for images to be displayed
- $conn1 = new mysqli("localhost", "root", "","acs_draft1");
+ $conn1 = new mysqli("localhost", "root", "","linearsmart");
 $scenario_id = $_SESSION['scenario_id'];
 if($_SESSION['message_fatality']) {
 $sqldth = "SELECT image_source FROM death_images WHERE scenario_id='$scenario_id'";

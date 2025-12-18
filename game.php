@@ -35,7 +35,7 @@ $cryptid = $_SESSION["cid"];
     $day = $_SESSION['day'];
     $day_temporal = $day + $_SESSION['day_initial_temporal'] - 1;
     //$conn = new mysqli("localhost", "acs_de_gam", "acslab","acs_draft");
-    $conn = new mysqli("localhost", "root", "","acs_draft1");
+    $conn = new mysqli("localhost", "root", "","linearsmart");
  $sqlinp = "SELECT p_temporal FROM reference WHERE day='$day_temporal'";
 $resulti = mysqli_query($conn,$sqlinp);
 $tempo=mysqli_fetch_array($resulti,MYSQLI_ASSOC);

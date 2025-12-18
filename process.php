@@ -42,6 +42,26 @@ $invest = test_input($_POST['invest']);
 //die(); 
   }
 
+echo json_encode($_POST, JSON_PRETTY_PRINT);
+$V1 = test_input($_POST['invest-retaining_walls']);
+echo $V1;
+$_SESSION['invest-retaining_walls'] =  $V1;
+$v2 = test_input($_POST['invest-drainage_systems']);
+$_SESSION['invest-drainage_systems']= $v2;
+echo $v2;
+$v3 = test_input($_POST['invest-land_use_planning']);
+$_SESSION['invest-land_use_planning'] = $v3;
+echo $v3;
+$v4 = test_input($_POST['invest-soil_classification']);
+$_SESSION['invest-soil_classification'] = $v4;
+echo $v4;
+$v5= test_input($_POST['invest-tree_planting']);
+$_SESSION['invest-tree_planting'] = $v5;
+echo $v5;
+$v6 = test_input($_POST['invest-water_management']);
+$_SESSION['invest-water_management'] = $v6;
+echo $v6;
+
 $chkOne = test_input($_POST['checkOne']);
 $chkTwo = test_input($_POST['checkTwo']);
 $chkThree = test_input($_POST['checkThree']);
@@ -58,7 +78,7 @@ $pinsur=$chkThree;
 $day = $_SESSION['day'];
 $unqid = $_SESSION['uid'];
 $consent = $_SESSION['consent'];
-$conn = new mysqli("localhost", "root", "", "acs_draft1");
+$conn = new mysqli("localhost", "root", "", "linearsmart");
     
 //inputs
 
@@ -213,8 +233,17 @@ $_SESSION['message_injury']=$damage_injury;
 $_SESSION['dmg_property']=$damage;
 
 
-$sqlo = "INSERT INTO game (consent, id, day, invest, hinsur, linsur, pinsur, cumulative_invest, weight_invest, daily_income, rand_property, rand_fatality, rand_injury, p_temporal, p_spatial, p_rain, p_investment, p_landslide, landslide_threshold, landslide, damage_property, damage_fatality, damage_injury, damage, net_money, final_money, return_mitigation, money_ini, time_span, dampening_factor_investment, wealth_property, p_property, p_fatality, p_injury, injury_daily_inc_loss, fatality_daily_inc_loss, day_initial_temporal)
-VALUES('$consent','$unqid','$day','$invest', '$hinsur', '$linsur', '$pinsur','$cumulative_invest','$w_i','$daily_income','$rand_property','$rand_fatality','$rand_injury','$p_temporal','$p_spatial','$p_rain','$p_investment','$p_landslide','$landslide_threshold','$landslide','$damage_property','$damage_fatality','$damage_injury','$damage','$net_money','$final_money','$M','$money_ini','$t_span','$d_f_inv','$wealth_property','$p_property','$p_fatality','$p_injury','$inj_loss','$fat_loss','$d_i_t')";
+
+$invest_retaining_walls =        $_SESSION['invest-retaining_walls'];
+$invest_drainage_systems =        $_SESSION['invest-drainage_systems'];
+$invest_land_use_planning =        $_SESSION['invest-land_use_planning'];
+$invest_soil_classification =        $_SESSION['invest-soil_classification'];
+$invest_tree_planting =        $_SESSION['invest-tree_planting'];
+$invest_water_management =        $_SESSION['invest-water_management'];
+
+$sqlo = "INSERT INTO game (consent, id, day, invest,  `invest-retaining_walls`, `invest-drainage_systems`,  `invest-land_use_planning`, `invest-soil_classification`, `invest-tree_planting`, `invest-water_management`,hinsur, linsur, pinsur, cumulative_invest, weight_invest, daily_income, rand_property, rand_fatality, rand_injury, p_temporal, p_spatial, p_rain, p_investment, p_landslide, landslide_threshold, landslide, damage_property, damage_fatality, damage_injury, damage, net_money, final_money, return_mitigation, money_ini, time_span, dampening_factor_investment, wealth_property, p_property, p_fatality, p_injury, injury_daily_inc_loss, fatality_daily_inc_loss, day_initial_temporal)
+VALUES('$consent','$unqid','$day','$invest','$invest_retaining_walls','$invest_drainage_systems','$invest_land_use_planning','$invest_soil_classification','$invest_tree_planting','$invest_water_management', '$hinsur', '$linsur', '$pinsur','$cumulative_invest','$w_i','$daily_income','$rand_property','$rand_fatality','$rand_injury','$p_temporal','$p_spatial','$p_rain','$p_investment','$p_landslide','$landslide_threshold','$landslide','$damage_property','$damage_fatality','$damage_injury','$damage','$net_money','$final_money','$M','$money_ini','$t_span','$d_f_inv','$wealth_property','$p_property','$p_fatality','$p_injury','$inj_loss','$fat_loss','$d_i_t')";
+echo "Query: \n" . $sqlo;
 
 $resulto=mysqli_query($conn,$sqlo);
 
