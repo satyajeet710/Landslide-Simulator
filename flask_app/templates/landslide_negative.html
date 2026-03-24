@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="jumbotron">
+      <h2 class="text-center"><i class="fa fa-smile-o"></i> Landslide did not Occur!</h2>
+      <br><br>
+      <p>You made <strong>{{ session.get('invest',0) }}</strong> investment against landslides and you spent <strong>{{ (session.get('checkOne',0) + session.get('checkTwo',0) + session.get('checkThree',0)) }}</strong> in buying different types of insurance.</p>
+      <p>Overall, your income stays at <strong>{{ session.get('daily_income')|round(1) }}</strong>.</p>
+      <p>Overall, your property wealth stays at <strong>{{ session.get('final_money_array',[])[(session.get('day',1)-1)|int] if session.get('final_money_array') else session.get('final_money') }}</strong>.</p>
+      <p>Your total wealth is <strong>{{ session.get('final_money')|round(1) }}</strong>.</p>
+      <br>
+      {% if session.get('day',1)-1 == session.get('time_span',0) %}
+        <a href="/end"><button class="btn btn-warning">Return To Game</button></a>
+      {% else %}
+        <a href="/game"><button class="btn btn-warning">Return To Game</button></a>
+      {% endif %}
+      <br><br>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4">
+      {% if death_img %}
+        <embed height="400" width="100%" src="{{ death_img }}">
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      {% if inj_img %}
+        <embed height="400" width="100%" src="{{ inj_img }}">
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      {% if prop_img %}
+        <embed height="400" width="100%" src="{{ prop_img }}">
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

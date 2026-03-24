@@ -701,7 +701,8 @@
         //   positioning. I didn't want to just prevent this default action, so I used [tab]
         //   as another way to moving to next step... And yes, I know that for the sake of
         //   consistency I should add [shift+tab] as opposite action...
-        document.setInterval(api.next(),2000);
+        // advance automatically every 2s (use proper setInterval and pass a function)
+        window.setInterval(function(){ api.next(); }, 2000);
         document.addEventListener("keyup", function ( event ) {
             if ( event.keyCode === 9 || ( event.keyCode >= 32 && event.keyCode <= 34 ) || (event.keyCode >= 37 && event.keyCode <= 40) ) {
                 switch( event.keyCode ) {

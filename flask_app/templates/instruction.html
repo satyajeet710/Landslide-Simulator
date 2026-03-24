@@ -1,0 +1,31 @@
+{% include '_head.html' %}
+{% include '_header.html' %}
+<div class="container-fluid">
+  <div class="jumbotron"><h1 class="text-center">INSTRUCTIONS</h1></div>
+  <div class="jumbotron">
+    <p class="text-justify">
+      You are a resident of Mandi district of Himachal Pradesh, India, a township in the lap of Himalayas. You with your family live on your property in this area. Landslides may get triggered in this area due to several environmental factors (e.g., the prevailing geological conditions and rainfall in the area). These landslides may cause fatalities and injuries to you and your family. In addition, these landslides may also damage your property and cause loss to your property and wealth.
+      <br><br><strong>In this task, you will be repeatedly making monthly investment decisions against landslides over a period of several months.</strong> In this task, we use a fictitious currency called “EC”. Every month, you earn EC 8760. This money is your monthly income and you may use a part or whole of it for making insurance payments or investments against landslides.
+      <br><br><strong>For example, you may buy insurance against landslides from your monthly income,</strong> where insurance may help protect your life and property against losses due to landslides. There are three types of insurance plans namely, life, health, or property, that you can purchase. Life insurance compensates you if there is a death due to a landslide, health insurance compensates you if there is an injury due to a landslide, and property insurance compensates you if there is a property damage due to a landslide.
+      <br><br><strong>In contrast, you may decide not to buy any insurance and you may decide to mitigate landslides by investing directly against landslides each month.</strong> Mitigation means that the money you invest against landslides will be used to reduce the chances of landslides via planting trees and building retaining walls.
+      <br><br>Based upon your decision to buy insurance or invest against landslides, you’ll get feedback on whether landslides occurred and whether there were associated fatalities, injuries, and property damages (all three events are independent and they can occur at the same time).
+      <br><br><strong>Your total wealth at any point in the task is the following: (sum of your income that you did not invest against landslides or in insurance + your property wealth) - (damages to you, your family, and to your property due to landslides).</strong> Your property wealth is assumed to be EC 50,00,000 at the start of the task. The income used for buying insurance or invested against landslides is lost and it cannot contribute to your total wealth. <strong>Your goal in this task is to maximize your total wealth.</strong>
+      <br><br><strong>Please note that landslides may occur; however, not all landslides may cause fatalities, injuries, and property damages.</strong> If you have bought the insurance (life, health or property) and if a landslide occurs and it causes fatality or injury or property damage, then your monthly income and property wealth may get less affected. However, if you did not buy life insurance or health insurance and if a landslide occurs and it causes fatality or injury, then your monthly income is reduced by 50% (fatality) and {{ (session.get('injury_daily_inc_loss',0) * 100)|round(0) }}% (injury) of its current value respectively. Furthermore, if a landslide occurs and it causes property damage, then your property wealth is reduced by {{ (session.get('wealth_property',0) * 100)|round(0) }}% of its property wealth if you did not invest in property insurance. The reductions in income due to fatalities, injuries, and property damage are permanent and remain for the duration of the task.
+      <br><br>The total probability of landslide is a weighted average of probability of landslide due to environmental factors and probability of landslide due to human (investment) factor. The income you invest to mitigate landslides may reduce the probability of landslide due to the human factor and also may reduce the total probability of landslides.
+      <br><br>You will be paid INR 50 for your effort as base payment. In addition, at the end of the task, we will enter top-10 participants based upon your total wealth into a lucky draw. One of the participants will be randomly selected from the lucky draw and awarded a cash prize of INR 500.
+      <br><br><strong>Thus, your goal in this task is to maximize your total wealth in the game.</strong>
+    </p>
+    <h2 class="text-center">Starting Game Parameters</h2>
+    <p>Your wealth: <strong>{{ session.get('money_ini', 0) }} EC</strong></p>
+    <p>When a landslide occurs:</p>
+    <p>If a death occurs and you do not possess life insurance, your monthly income will be reduced by <strong>{{ (session.get('fatality_daily_inc_loss',0) * 100)|round(0) }}%</strong> of its current value.</p>
+    <p>If an injury occurs and you do not possess health insurance, your monthly income will be reduced by <strong>{{ (session.get('injury_daily_inc_loss',0) * 100)|round(0) }}%</strong> of its current value.</p>
+    <p>If a property damage occurs and you do not possess property insurance, your wealth will be reduced by <strong>{{ (session.get('wealth_property',0) * 100)|round(0) }}%</strong> of your property wealth.</p>
+    <p><strong>Please note that your goal in this task is to maximize your total wealth across investments over a number of months.</strong></p>
+    <p><strong>Best of Luck!</strong></p>
+    <div class="text-center">
+      <a href="{{ url_for('game') }}"><button type="button" class="btn btn-primary btn-lg center-btn">PLAY</button></a>
+    </div>
+  </div>
+</div>
+{% include '_footer.html' %}

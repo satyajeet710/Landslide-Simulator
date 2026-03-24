@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="jumbotron">
+  <h1>Congrats — End of Game</h1>
+  <p>Your final wealth: {{ session.final_money if session.final_money else 'N/A' }}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,169 @@
+{% include '_head.html' %}
+{% include '_header.html' %}
+<script src="/js/highcharts.js"></script>
+<div class="container-fluid">
+  <br>
+  <div class="row">
+    <div class="col-md-8"><div class="jumbotron">
+      <div class="row">
+        <!-- day-wise message image -->
+        <div class="col-sm-6">
+          {% if day_image %}
+            <embed height="200" width="100%" src="{{ day_image }}">
+          {% endif %}
+        </div>
+        <!-- probability-wise message image (choose first matching) -->
+        <div class="col-sm-6">
+          {% if prob_images %}
+            {% set lndsld = session.get('p_landslide', 0) %}
+            {% set shown = false %}
+            {% for p in prob_images %}
+              {% if not shown and lndsld >= p.from_prob and lndsld <= p.to_prob %}
+                <embed height="200" width="100%" src="{{ p.image_source }}">
+                {% set shown = true %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="row">
+        <script type="text/javascript">
+        function yesnoCheck() {
+            if (document.getElementById('yesCheck').checked) {
+                document.getElementById('ifYesPlan').style.visibility = 'visible';
+                document.getElementById('invest').value = 0;
+            }
+            if (document.getElementById('noCheck').checked) {
+                document.getElementById('ifNoPlan').style.visibility = 'visible';
+                document.getElementById('mitigationOptions').style.visibility = 'visible';
+                document.getElementById('invest').value = "";
+            }
+        }
+        function Check1() { document.getElementById('checkOne').value = document.getElementById('Checkbox1').checked ? 1173 : 0; }
+        function Check2() { document.getElementById('checkTwo').value = document.getElementById('Checkbox2').checked ? 488 : 0; }
+        function Check3() { document.getElementById('checkThree').value = document.getElementById('Checkbox3').checked ? 1884 : 0; }
+        function valthisform() {
+            var chkd = document.form2.Checkbox1.checked || document.form2.Checkbox2.checked || document.form2.Checkbox3.checked || document.getElementById('noCheck').checked;
+            var sumInsured = parseFloat(document.getElementById('checkOne').value) + parseFloat(document.getElementById('checkTwo').value) + parseFloat(document.getElementById('checkThree').value);
+            var incomeAvailable = {{ income or 0 }};
+            if (sumInsured > incomeAvailable) { alert('Income available with you is less than the amount required for insurance'); return false; }
+            if (chkd) { return true; } else { alert('Please choose an option or fill-in a value'); return false; }
+        }
+        </script>
+
+        <form role="form" id="form2" name="form2" method="post" onsubmit="return valthisform()" action="{{ url_for('process') }}">
+          <input type="checkbox" onclick="javascript:yesnoCheck();" name="yesno" id="yesCheck"> Yes, I would like to enroll into some insurance plans for the next month for adapting against landslides.<br>
+
+          <div class="form-group">
+            <div class="container2" id="ifYesPlan" style="visibility:hidden">
+              <input type="checkbox" onclick="javascript:Check1();" name="chk1" id="Checkbox1"> Yes, I would like to enroll into a health insurance plan for the next month (1173 EC/month).<br>
+              <input type="checkbox" onclick="javascript:Check2();" name="chk2" id="Checkbox2"> Yes, I would like to enroll into a life insurance plan for the next month (488 EC/month).<br>
+              <input type="checkbox" onclick="javascript:Check3();" name="chk3" id="Checkbox3"> Yes, I would like to enroll into a property insurance plan for the next month (1884 EC/month).<br>
+            </div>
+          </div>
+
+          <input type="hidden" name="checkOne" id="checkOne" value="0" />
+          <input type="hidden" name="checkTwo" id="checkTwo" value="0" />
+          <input type="hidden" name="checkThree" id="checkThree" value="0" />
+
+          <input type="checkbox" onclick="javascript:yesnoCheck();" name="yesno" id="noCheck"> Yes, I would like to decide the investment for mitigating landslides myself for the next month.<br>
+
+          <div class="form-group">
+            <div class="container1" id="ifNoPlan" style="visibility:hidden">
+              <label><h3>Your investment for landslide mitigation for month {{ session.get('day', 1) }} (between 0.0 and {{ (session.get('daily_income',0) * 10 //1) / 10 }}):</h3></label>
+            </div>
+          </div>
+
+          <div class="form-group" id="mitigationOptions" style="visibility:hidden">
+            <h3>Modern Mitigation Strategies</h3>
+            <label> Retaining Walls & Slope Reinforcement</label><br>
+            <input type="number" class="form-control-retaining_walls" id="invest-retaining_walls" name="invest-retaining_walls" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <label> Drainage Systems & Surface Water Management</label><br>
+            <input type="number" class="form-control-drainage_systems" id="invest-drainage_systems" name="invest-drainage_systems" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <label> Land-Use Planning & Structural Modifications</label><br>
+            <input type="number" class="form-control-land_use_planning" id="invest-land_use_planning" name="invest-land_use_planning" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <h3>Traditional IKS-Based Mitigation Strategies</h3>
+            <label> Soil Classification & Herbal Binding Methods </label><br>
+            <input type="number" class="form-control-soil_classification" id="invest-soil_classification" name="invest-soil_classification" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <label> Tree Planting for Slope Stability </label><br>
+            <input type="number" class="form-control-tree_planting" id="invest-tree_planting" name="invest-tree_planting" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <label> Groundwater & Rainwater Management</label><br>
+            <input type="number" class="form-control-water_management" id="invest-water_management" name="invest-water_management" step="0.1" min=0.0 value="0" max={{ income or 0 }} required><br>
+            <h3>Total Investment</h3>
+            <input type="number" class="form-control" id="invest" name="invest" step="0.1" min="0.0" max={{ income or 0 }}>
+          </div>
+
+          <div class="form-group"><input type="submit" value="Submit" class="btn btn-md btn-primary"></div>
+        </form>
+
+        <!-- Modal Help -->
+        <div id="myModal" class="modal fade" role="dialog">
+          <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">Help</h4></div>
+            <div class="modal-body"><p>On the right hand side, the table indicates values of various game parameters.</p><p>Below this panel there are 3 graphs indicating the probability of landslide, your income and property wealth as you play.</p><p>Please enter your investment value in the text box above.</p></div>
+            <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div>
+          </div></div>
+        </div>
+
+      </div>
+    </div></div>
+
+    <!-- Game Parameters column -->
+    <div class="col-md-4"><div class="well">
+      <h4 class="text-center">Game Parameters</h4>
+      <table class="table table-hover table-condensed">
+        <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+        <tr class="info"><th>Month</th><th>{{ session.get('day', 0) }}</th></tr>
+        <tr class="info"><th>Income available for investment in this month (M)</th><th>{{ (session.get('daily_income',0) //1) | round(1) }}</th></tr>
+        <tr class="info"><th>Total income not invested in landslides (NTM)</th><th>{% if session.get('day',1) == 1 %}-{% else %}{{ (session.get('income_not_invested') | default([]) )[-1] if session.get('income_not_invested') else '-' }}{% endif %}</th></tr>
+        <tr class="info"><th>Property wealth (PW)</th><th>{{ session.get('money_ini',0) | round(1) }}</th></tr>
+        <tr class="info"><th>Total damage due to landslides (TD)</th><th>{% if session.get('day',1) == 1 %}-{% else %}{{ (session.get('final_money',0) - session.get('money_ini',0)) | abs | round(1) }}{% endif %}</th></tr>
+        <tr class="info"><th>Total wealth (NTM + PW - TD)</th><th>{{ session.get('final_money',0) | round(1) }}</th></tr>
+        <tr class="info"><th>Probability of landslide due to human (investment) factor (P(I))</th><th>{% if session.get('day',1) == 1 %}-{% else %}{{ session.get('p_invest') | default('-') }}{% endif %}</th></tr>
+        <tr class="info"><th>Probability of landslide due to environmental factors (P(E))</th><th>{{ session.get('p_rain',0) | round(2) }}</th></tr>
+        <tr class="info"><th>Probability weight (W)</th><th>{{ session.get('weight_invest',0) }}</th></tr>
+        <tr class="info"><th>Total probability of landslide (W*P(I)+(1-W)*P(E))</th><th>{% if session.get('day',1) == 1 %}-{% else %}{{ (session.get('p_landslide') or 0) | round(2) }}{% endif %}</th></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-4"><div id="container3" style="width:100%; height:400px;"></div></div>
+    <div class="col-sm-4"><div id="container4" style="width:100%; height:400px;"></div></div>
+    <div class="col-sm-4"><div id="container1" style="width:100%; height:400px;"></div></div>
+  </div>
+</div>
+
+{% include '_footer.html' %}
+
+<script>
+// Charts using Highcharts and session arrays
+// Run on window.onload so jQuery and Highcharts are present
+window.onload = function () {
+  var daychart = {{ (session.get('daychart') | default([])) | tojson }};
+  var final_money_array = {{ (session.get('final_money_array') | default([])) | tojson }};
+  var p_landslide_array = {{ (session.get('p_landslide_array') | default([])) | tojson }};
+  var income_not_invested = {{ (session.get('income_not_invested') | default([])) | tojson }};
+
+  // initialize charts
+  try {
+    $('#container1').highcharts({ chart:{ type:'line' }, title:{ text:'Property wealth' }, xAxis:{ categories: daychart }, yAxis:{ title:{ text:'Property wealth' } }, credits:{ enabled:false }, series:[{ name:'', data: final_money_array }] });
+
+    $('#container3').highcharts({ chart:{ type:'line' }, title:{ text:'Total probability of landslide' }, xAxis:{ categories: daychart }, yAxis:{ title:{ text:'Total probability of landslide' } }, credits:{ enabled:false }, series:[{ name:'', data: p_landslide_array }] });
+
+    $('#container4').highcharts({ chart:{ type:'line' }, title:{ text:'Total income not invested in landslides' }, xAxis:{ categories: daychart }, yAxis:{ title:{ text:'Total income not invested in landslides' } }, credits:{ enabled:false }, series:[{ name:'', data: income_not_invested }] });
+  } catch (e) {
+    console && console.error && console.error('Chart init error', e);
+  }
+
+  // updateTotalInvest similar to original
+  function updateTotalInvest(){
+    var ids = ['invest-retaining_walls','invest-drainage_systems','invest-land_use_planning','invest-soil_classification','invest-tree_planting','invest-water_management'];
+    var total=0; ids.forEach(function(id){ var el=document.getElementById(id); total += parseFloat(el && el.value) || 0; });
+    var inv = document.getElementById('invest'); if(inv) inv.value = total.toFixed(1);
+  }
+  var ids = ['invest-retaining_walls','invest-drainage_systems','invest-land_use_planning','invest-soil_classification','invest-tree_planting','invest-water_management'];
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('input', updateTotalInvest); });
+};
+</script>

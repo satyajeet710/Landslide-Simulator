@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="jumbotron">
+      <h2 class="text-center"><i class="fa fa-exclamation-triangle"></i> Landslide Occurred!</h2>
+      <br><br>
+      <p>You made <strong>{{ session.get('invest',0) }}</strong> investment against landslides and you spent <strong>{{ (session.get('checkOne',0) + session.get('checkTwo',0) + session.get('checkThree',0)) }}</strong> in buying different types of insurance.</p>
+
+      {% if session.get('message_injury') and session.get('checkOne',0) != 0 %}
+        <p>Sorry, a wage-earner of your family got injured. As you purchased health insurance, your monthly income was not affected and stays the same at <strong>{{ session.get('daily_income')|round(1) }}</strong>.</p>
+      {% elif session.get('message_injury') and session.get('checkOne',0) == 0 %}
+        <p>Sorry, a wage-earner of your family got injured. As you did not purchase health insurance, your monthly income was affected and decreased to <strong>{{ session.get('daily_income')|round(1) }}</strong>.</p>
+      {% else %}
+        <p>Fortunately, no one in your family was injured.</p>
+        <p>Thus, your monthly income was not affected and stays at the same value.</p>
+      {% endif %}
+
+      {% if session.get('message_fatality') and session.get('checkTwo',0) != 0 %}
+        <p>Sorry, a wage-earner of your family died. As you purchased life insurance, your monthly income was not affected and stays the same at <strong>{{ session.get('daily_income')|round(1) }}</strong>.</p>
+      {% elif session.get('message_fatality') and session.get('checkTwo',0) == 0 %}
+        <p>Sorry, a wage-earner of your family died. As you did not purchase life insurance, your monthly income was affected and decreased to <strong>{{ session.get('daily_income')|round(1) }}</strong>.</p>
+      {% else %}
+        <p>Fortunately, no one in your family died. Thus, your monthly income was not affected and stays at the same value.</p>
+      {% endif %}
+
+      {% if session.get('message_property') and session.get('checkThree',0) != 0 %}
+        <p>Sorry, your house was destroyed by the debris. As you purchased property insurance, the total damage occurred is <strong>{{ session.get('dmg_property')|round(1) }}</strong>.</p>
+        <p>Thus, your property wealth is <strong>{{ session.get('final_money_array',[])[(session.get('day',1)-1)|int]|round(1) if session.get('final_money_array') else session.get('final_money')|round(1) }}</strong>.</p>
+      {% elif session.get('message_property') and session.get('checkThree',0) == 0 %}
+        <p>Sorry, your house was destroyed by the debris. As you did not purchase property insurance, the total damage occurred is <strong>{{ session.get('dmg_property')|round(1) }}</strong>.</p>
+      {% else %}
+        <p>Fortunately, none of your property was harmed.</p>
+        <p>Thus, your property wealth was not affected and stays at the same value.</p>
+      {% endif %}
+
+      <p>Your total wealth is <strong>{{ session.get('final_money')|round(1) }}</strong>.</p>
+      <br>
+      {% if session.get('day',1)-1 == session.get('time_span',0) %}
+        <a href="/end"><button class="btn btn-warning">Return To Game</button></a>
+      {% else %}
+        <a href="/game"><button class="btn btn-warning">Return To Game</button></a>
+      {% endif %}
+      <br><br>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4">
+      {% if death_img %}
+        <embed height="400" width="100%" src="{{ death_img }}">
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      {% if inj_img %}
+        <embed height="400" width="100%" src="{{ inj_img }}">
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      {% if prop_img %}
+        <embed height="400" width="100%" src="{{ prop_img }}">
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% include '_head.html' %}
+{% include '_header.html' %}
+<div class="container">
+  <div class="jumbotron">
+    <h1 class="text-center">Consent Form</h1>
+    <div class="container-fluid">
+      <p class="text-justify">
+        This game is part of a research study conducted by Ankush (Ph.D. Scholar) under the guidance of Prof. Varun Dutt and Dr. K.V. Uday at the Indian Institute of Technology Mandi. The purpose of the research is to find out how an individual’s decision-making is influenced in the presence of various insurance models against landslides.
+      </p>
+      <h3><b>Procedures</b></h3>
+      <p class="text-justify">Throughout the experiment, you will be asked to make a series of decisions to try and maximize your payoff through your choices. You will be asked to imagine that you are a resident in an Indian Himalayan town, where you need to make monthly investment decisions in order to mitigate landslides. You will be making investment decisions monthly until the program stops on its own.</p>
+      <h3><b>Participant Requirements</b></h3>
+      <p class="text-justify">Participation in this study is limited to individuals of age {{ age_restriction }} and above, with at least basic computer proficiency, and the ability to read and understand English.</p>
+      <h3><b>Risks</b></h3>
+      <p class="text-justify">The risks and discomfort associated with participation in this study are no greater than those ordinarily encountered in daily life or during other online activities.</p>
+      <h3><b>Benefits</b></h3>
+      <p class="text-justify">There may be no personal benefit from your participation in the study however, the knowledge received, may be of value to society.</p>
+      <h3><b>Compensation & Costs</b></h3>
+      <p class="text-justify">You will be compensated for completing the game at the rate initially advertised. You will only be eligible for compensation if you have completed the game in full and supplied the appropriate confirmation code. There is no partial payment if you do not complete the study.</p>
+      <h3><b>Confidentiality</b></h3>
+      <p class="text-justify">The data collected for the research does not include any personally identifiable information about you. By participating in this research, you understand and agree that IIT Mandi may be required to disclose your consent form, data and other personally identifiable information as required by law, regulation, subpoena or court order.</p>
+      <h3><b>Right to Ask Questions & Contact Information</b></h3>
+      <p class="text-justify">If you have any questions about this study, contact the Principal Investigators listed on the site.</p>
+      <form id="consent" role="form" method="post" action="">
+        <input type="hidden" name="formsent" value="1" />
+        <div class="form-group">
+          <label>I am {{ age_restriction }} years or older.</label>
+          <label class="radio-inline"><input type="radio" name="cq1" value="1" required> Yes</label>
+          <label class="radio-inline"><input type="radio" name="cq1" value="0"> No</label>
+        </div>
+        <div class="form-group">
+          <label>I have read and understand the information provided completely.</label>
+          <label class="radio-inline"><input type="radio" name="cq2" value="1" required> Yes</label>
+          <label class="radio-inline"><input type="radio" name="cq2" value="0"> No</label>
+        </div>
+        <div class="form-group">
+          <label>I want to participate in this research and continue with the study.</label>
+          <label class="radio-inline"><input type="radio" name="cq3" value="1" required> Yes</label>
+          <label class="radio-inline"><input type="radio" name="cq3" value="0"> No</label>
+        </div>
+      </form>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary btn-lg center-btn" onclick="document.getElementById('consent').submit();">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% include '_footer.html' %}
