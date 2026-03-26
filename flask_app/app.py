@@ -44,9 +44,8 @@ app.secret_key = os.environ.get('FLASK_SECRET', 'change-me')
 
 # DB config — matches original PHP defaults
 DB_CONFIG = {
-    'host':     '127.0.0.1',
-    'port':     3306,
-    'user':     'root',
+    'host': 'localhost',
+    'user': 'root',
     'password': '',
     'database': 'linearsmart'
 }
@@ -142,7 +141,22 @@ def rl_init_session(p_spatial):
     """Initialize a fresh RL env state in the session, using the same p_spatial as the human."""
     if not RL_AVAILABLE:
         return
-    env = LandslideEnv()
+
+    params = {
+    'time_span': session.get('time_span'),
+    'daily_income': session.get('daily_income'),
+    'money_ini': session.get('money_ini'),
+    'return_mitigation': session.get('return_mitigation'),
+    'weight_invest': session.get('weight_invest'),
+    'p_property': session.get('p_property'),
+    'p_fatality': session.get('p_fatality'),
+    'p_injury': session.get('p_injury'),
+    'wealth_property': session.get('wealth_property'),
+    'injury_daily_inc_loss': session.get('injury_daily_inc_loss'),
+    'fatality_daily_inc_loss': session.get('fatality_daily_inc_loss'),
+    }
+
+    env = LandslideEnv(params=params)
     env.reset()
     env.p_spatial = p_spatial   # same location risk as human player
     session['rl_state']         = env._get_state().tolist()
