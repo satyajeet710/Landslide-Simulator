@@ -95,29 +95,29 @@
   <a href="/" class="btn btn-primary btn-lg">Play Again</a>
 </div>
 
-{% endblock %}
 
 {% if rl_available and rl_wealth_array %}
-<script src="/js/highcharts.js"></script>
+<!-- <script src="/js/highcharts.js"></script> -->
 <script>
-(function() {
-  var months = {{ daychart | tojson }};
-  var human  = {{ fm_array | tojson }};
-  var ai     = {{ rl_wealth_array | tojson }};
+window.onload = function () {
+  var months = {{ daychart | tojson | safe }};
+  var human  = {{ fm_array | tojson | safe }};
+  var ai     = {{ rl_wealth_array | tojson | safe }};
 
-  if (typeof Highcharts !== 'undefined') {
-    Highcharts.chart('wealth-chart', {
-      chart: { type: 'line' },
-      title: { text: 'Property Wealth Over Time: You vs AI Agent' },
-      xAxis: { categories: months, title: { text: 'Month' } },
-      yAxis: { title: { text: 'Wealth (EC)' } },
-      credits: { enabled: false },
-      series: [
-        { name: 'You',      data: human, color: '#2196F3' },
-        { name: 'AI Agent', data: ai,    color: '#4CAF50', dashStyle: 'ShortDash' }
-      ]
-    });
-  }
-})();
+  console.log('fm_array:', human);
+  console.log('rl_wealth_array:', ai);
+
+  $('#wealth-chart').highcharts({
+    chart: { type: 'line' },
+    title: { text: 'Property Wealth Over Time: You vs AI Agent' },
+    xAxis: { categories: months },
+    series: [
+      { name: 'You', data: human },
+      { name: 'AI Agent', data: ai }
+    ]
+  });
+};
 </script>
 {% endif %}
+
+{% endblock %}

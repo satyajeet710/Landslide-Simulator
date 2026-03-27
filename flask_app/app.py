@@ -684,8 +684,7 @@ def end():
         })
 
     fm_array_clean   = [v if v is not None else 0 for v in fm_array]
-    rl_wealth_array  = [0] + [r['final_money'] for r in rl_log] if rl_log else []
-
+    rl_wealth_array  = [r['final_money'] for r in rl_log] if rl_log else []
     return render_template('end.html',
                            human_wealth=round(human_wealth, 1),
                            rl_wealth=round(rl_wealth, 1) if rl_wealth is not None else None,
