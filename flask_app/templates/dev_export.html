@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container" style="max-width:600px;">
+  <h2>Export Table as CSV</h2>
+  <form id="exportForm" method="get" action="/download">
+    <div class="form-group">
+      <label for="db">Database:</label>
+      <select class="form-control" id="db" name="db" required>
+        <option value="">Select database</option>
+        {% for db in databases %}
+          <option value="{{ db }}">{{ db }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="table">Table:</label>
+      <select class="form-control" id="table" name="table" required disabled>
+        <option value="">Select table</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary" id="downloadBtn" disabled>Download CSV</button>
+  </form>
+</div>
+<script>
+document.getElementById('db').addEventListener('change', function() {
+  var db = this.value;
+  var tableSelect = document.getElementById('table');
+  var btn = document.getElementById('downloadBtn');
+  tableSelect.innerHTML = '<option value="">Loading...</option>';
+  tableSelect.disabled = true;
+  btn.disabled = true;
+  if (!db) {
+    tableSelect.innerHTML = '<option value="">Select table</option>';
+    return;
+  }
+  fetch('/get-tables/' + encodeURIComponent(db))
+    .then(r => r.json())
+    .then(data => {
+      tableSelect.innerHTML = '<option value="">Select table</option>';
+      data.forEach(function(tbl) {
+        var opt = document.createElement('option');
+        opt.value = tbl;
+        opt.textContent = tbl;
+        tableSelect.appendChild(opt);
+      });
+      tableSelect.disabled = false;
+    });
+});
+document.getElementById('table').addEventListener('change', function() {
+  document.getElementById('downloadBtn').disabled = !this.value;
+});
+</script>
+{% endblock %}

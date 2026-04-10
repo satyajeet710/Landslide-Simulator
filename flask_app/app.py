@@ -7,6 +7,7 @@ import math
 import random
 import smtplib
 from email.message import EmailMessage
+import mysql.connector
 
 # ── RL agent (optional — loads if trained model exists) ───────────────────────
 import sys
@@ -51,6 +52,61 @@ DB_CONFIG = {
 }
 
 init_db_pool(DB_CONFIG)
+
+# --- CSV Export Feature ---
+from flask import jsonify, send_file
+import io, csv
+
+# Whitelist of allowed databases (edit as needed)
+ALLOWED_DATABASES = ['linearsmart']
+ALLOWED_TABLES = {
+    'linearsmart': [
+        'param', 'game', 'demographic', 'nbr_pay', 'death_images', 'injury_images', 'property_images',
+        'message_day', 'message_probability', 'reference', 'spatial_p', 'contact_log', 'human_log', 'rl_log'
+    ]
+}
+
+@app.route('/dev-export')
+def dev_export():
+    return render_template('dev_export.html', databases=ALLOWED_DATABASES)
+
+@app.route('/get-tables/<db_name>')
+def get_tables(db_name):
+    if db_name not in ALLOWED_DATABASES:
+        return jsonify([])
+    return jsonify(ALLOWED_TABLES.get(db_name, []))
+
+@app.route('/download')
+def download():
+    db = request.args.get('db')
+    table = request.args.get('table')
+    # Security: validate db and table
+    if db not in ALLOWED_DATABASES or table not in ALLOWED_TABLES.get(db, []):
+        return 'Invalid database or table', 400
+    # Connect to the selected DB
+    conn = mysql.connector.connect(
+        host=DB_CONFIG['host'], user=DB_CONFIG['user'], password=DB_CONFIG['password'], database=db
+    )
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM `{table}`")
+    rows = cur.fetchall()
+    headers = [desc[0] for desc in cur.description]
+    # Write CSV to memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    output.seek(0)
+    cur.close(); conn.close()
+    # Send as file
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename={table}.csv'
+        }
+    )
+
 
 # Serve existing repo static folders (so templates can reference /css/* and /js/* exactly as before)
 @app.route('/css/<path:filename>')
