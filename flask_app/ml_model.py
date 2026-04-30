@@ -22,29 +22,40 @@ class LandslideNN(nn.Module):
 
 # ---- Load Model ----
 model = LandslideNN()
-model.load_state_dict(torch.load('landslide_nn.pth', map_location=torch.device('cpu')))
+model.load_state_dict(torch.load('flask_app/landslide_nn.pth', map_location=torch.device('cpu')))
 model.eval()
 
 # ---- Load Dataset ----
-env_df = pd.read_csv('datasets/mandi_monthly_dataset.csv')
+env_df = pd.read_csv('flask_app/datasets/mandi_monthly_dataset.csv')
 
 # ---- Scaler ----
 scaler = StandardScaler()
 scaler.fit(env_df[['rainfall_mm', 'slope_deg', 'soil_index']])
 
 
-# ---- City Mapping ----
-city_to_subdivision = {
-    "Mandi": "Mandi",
-    "Kullu": "Kullu",
-    "Manali": "Kullu",
-    # add more if needed
-}
+# # ---- City Mapping ----
+# city_to_subdivision = {
+#     "Mandi Sadar": "Mandi Sadar",
+#     "Sundernagar": "Sundernagar",
+#     "Jogindernagar": "Jogindernagar",
+#     "Karsog": "Karsog",
+#     "Chachyot": "Chachyot",
+#     "Balh": "Balh",
+#     "Sarkaghat": "Sarkaghat",
+#     "Padhar": "Padhar",
+#     "Thunag": "Thunag",
+#     "Nihri": "Nihri",
+#     "Dharampur": "Dharampur",
+#     "Baggi": "Baggi",
+#     "Gohar": "Gohar",
+#     "Seraj": "Seraj",
+#     "Pandoh": "Pandoh"
+# }
 
 
 # ---- Prediction Function ----
 def get_ml_probabilities(city, month_num):
-    subdivision = city_to_subdivision.get(city, "Mandi")
+    subdivision = city
 
     row = env_df[
         (env_df['subdivision'] == subdivision) &

@@ -29,8 +29,28 @@
 
       <div class="form-group"><label>E-Mail ID (strictly for payment purposes):</label><input id="email" type="email" name="email" class="form-control" required></div>
 
-      <div class="form-group"><label>The city/town to which you belong to:</label><input type="text" name="city" class="form-control" required></div>
-
+      <!-- <div class="form-group"><label>The city/town to which you belong to:</label><input type="text" name="city" class="form-control" required></div> -->
+      <div class="form-group">
+      <label>The city/town to which you belong to:</label>
+      <select name="city" class="form-control" required>
+        <option value="">-- Select City --</option>
+        <option value="Mandi Sadar">Mandi Sadar</option>
+        <option value="Sundernagar">Sundernagar</option>
+        <option value="Jogindernagar">Jogindernagar</option>
+        <option value="Karsog">Karsog</option>
+        <option value="Chachyot">Chachyot</option>
+        <option value="Balh">Balh</option>
+        <option value="Sarkaghat">Sarkaghat</option>
+        <option value="Padhar">Padhar</option>
+        <option value="Thunag">Thunag</option>
+        <option value="Nihri">Nihri</option>
+        <option value="Dharampur">Dharampur</option>
+        <option value="Baggi">Baggi</option>
+        <option value="Gohar">Gohar</option>
+        <option value="Seraj">Seraj</option>
+        <option value="Pandoh">Pandoh</option>
+      </select>
+    </div>
       <div class="form-group">
         <label>Do you currently live at the city/town where you belong to?</label>
         <div class="radio"><label><input type="radio" name="live" value="yes" required>Yes</label></div>
