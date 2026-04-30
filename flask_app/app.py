@@ -7,6 +7,7 @@ import math
 import random
 import smtplib
 from email.message import EmailMessage
+from ml_model import get_ml_probabilities
 
 app = Flask(__name__, static_folder='../')
 app.secret_key = os.environ.get('FLASK_SECRET', 'change-me')
@@ -215,7 +216,6 @@ def demographic():
             # spatial interpolation (simplified)
             rand_spatial = round(random.random(),2)
             session['rand_spatial'] = rand_spatial
-            session['p_spatial'] = rand_spatial
             session['final_money'] = session['money_ini']
             # initialize arrays used by the game charts (match PHP initialization)
             tspan = int(session.get('time_span', 0) or 0)
@@ -223,7 +223,7 @@ def demographic():
             session['daily_income'] = float(session.get('daily_income') or 0)
             session['money_ini'] = float(session.get('money_ini') or 0)
             session['final_money'] = float(session.get('final_money') or 0)
-
+            session['city'] = city
             session['daily_income_array'] = [None] * (tspan + 1)
             session['daily_income_array'][0] = session['daily_income']
             session['final_money_array'] = [None] * (tspan + 1)
@@ -258,17 +258,32 @@ def instruction():
 def game():
     if not session.get('connect'):
         return redirect(url_for('connect'))
-    # set p_temporal from reference table for current day
-    day = session.get('day', 1)
-    d_i_t = 1
-    day_temporal = day + d_i_t - 1
-    ref = query_one('SELECT p_temporal FROM reference WHERE day=%s', (day_temporal,))
-    # convert DB Decimal values to float to avoid Decimal/float arithmetic errors
-    p_temporal = float(ref['p_temporal']) if (ref and ref.get('p_temporal') is not None) else 0.1
-    session['p_temporal'] = p_temporal
-    session['p_rain'] = float(session.get('p_spatial', 0.1)) * p_temporal
-    return render_template('game.html', income=session.get('daily_income'), day=session.get('day'))
 
+    day = session.get('day', 1)
+
+    # Convert day → month
+    month_num = ((day - 1) % 12) + 1
+
+    # Get user city
+    city = session.get('city', 'Mandi')
+
+    # 🔥 ML Prediction
+    p_spatial, p_temporal = get_ml_probabilities(city, month_num)
+
+    # Store in session
+    session['p_spatial'] = p_spatial
+    session['p_temporal'] = p_temporal
+
+    # Combined probability
+    session['p_rain'] = p_spatial * p_temporal
+
+    return render_template(
+        'game.html',
+        income=session.get('daily_income'),
+        day=day,
+        p_spatial=round(p_spatial, 3),
+        p_temporal=round(p_temporal, 3)
+    )
 @app.route('/process', methods=['POST'])
 def process():
     # ported simplified logic from process.php

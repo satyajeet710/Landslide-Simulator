@@ -35,6 +35,22 @@
       {% endif %}
 
       <p>Your total wealth is <strong>{{ session.get('final_money')|round(1) }}</strong>.</p>
+      <hr>
+<h4>📊 Landslide Risk Prediction (ML Model)</h4>
+
+<p>
+  Spatial Probability (P(S)): 
+  <strong>{{ session.get('p_spatial',0) | round(3) }}</strong>
+</p>
+
+<p>
+  Temporal Probability (P(T)): 
+  <strong>{{ session.get('p_temporal',0) | round(3) }}</strong>
+</p>
+
+<p>
+  <em>These probabilities are predicted using a Neural Network model based on your location and time (month).</em>
+</p>
       <br>
       {% if session.get('day',1)-1 == session.get('time_span',0) %}
         <a href="/end"><button class="btn btn-warning">Return To Game</button></a>
