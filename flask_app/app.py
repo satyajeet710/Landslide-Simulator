@@ -7,6 +7,38 @@ import math
 import random
 import smtplib
 from email.message import EmailMessage
+import mysql.connector
+
+# ── RL agent (optional — loads if trained model exists) ───────────────────────
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'rl'))
+try:
+    from rl.landslide_env import LandslideEnv, DEFAULT_PARAMS, P_TEMPORAL
+    from rl.agent import DQNAgent
+    _RL_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'rl', 'trained_agent.pt')
+    _rl_env   = LandslideEnv()
+    _rl_agent = DQNAgent(state_size=_rl_env.STATE_SIZE, action_size=_rl_env.N_ACTIONS)
+    if os.path.exists(_RL_MODEL_PATH):
+        _rl_agent.load(_RL_MODEL_PATH)
+        RL_AVAILABLE = True
+    else:
+        RL_AVAILABLE = False
+except Exception as _rl_err:
+    RL_AVAILABLE = False
+    print(f'[RL] Agent not loaded: {_rl_err}')
+
+RL_ACTION_LABELS = [
+    'Do nothing',
+    'Invest 10% of income',
+    'Invest 20% of income',
+    'Invest 30% of income',
+    'Buy health insurance only',
+    'Buy life insurance only',
+    'Buy property insurance only',
+    'Buy all 3 insurances',
+    'Invest 10% + all insurances',
+    'Invest 20% + all insurances',
+]
 from ml_model import get_ml_probabilities
 
 app = Flask(__name__, static_folder='../')
@@ -21,6 +53,61 @@ DB_CONFIG = {
 }
 
 init_db_pool(DB_CONFIG)
+
+# --- CSV Export Feature ---
+from flask import jsonify, send_file
+import io, csv
+
+# Whitelist of allowed databases (edit as needed)
+ALLOWED_DATABASES = ['linearsmart']
+ALLOWED_TABLES = {
+    'linearsmart': [
+        'param', 'game', 'demographic', 'nbr_pay', 'death_images', 'injury_images', 'property_images',
+        'message_day', 'message_probability', 'reference', 'spatial_p', 'contact_log', 'human_log', 'rl_log'
+    ]
+}
+
+@app.route('/dev-export')
+def dev_export():
+    return render_template('dev_export.html', databases=ALLOWED_DATABASES)
+
+@app.route('/get-tables/<db_name>')
+def get_tables(db_name):
+    if db_name not in ALLOWED_DATABASES:
+        return jsonify([])
+    return jsonify(ALLOWED_TABLES.get(db_name, []))
+
+@app.route('/download')
+def download():
+    db = request.args.get('db')
+    table = request.args.get('table')
+    # Security: validate db and table
+    if db not in ALLOWED_DATABASES or table not in ALLOWED_TABLES.get(db, []):
+        return 'Invalid database or table', 400
+    # Connect to the selected DB
+    conn = mysql.connector.connect(
+        host=DB_CONFIG['host'], user=DB_CONFIG['user'], password=DB_CONFIG['password'], database=db
+    )
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM `{table}`")
+    rows = cur.fetchall()
+    headers = [desc[0] for desc in cur.description]
+    # Write CSV to memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    output.seek(0)
+    cur.close(); conn.close()
+    # Send as file
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename={table}.csv'
+        }
+    )
+
 
 # Serve existing repo static folders (so templates can reference /css/* and /js/* exactly as before)
 @app.route('/css/<path:filename>')
@@ -105,6 +192,124 @@ def execute(query, params=None):
         cur.close(); conn.close()
         raise RuntimeError(msg)
     cur.close(); conn.close()
+
+# ── RL helper ────────────────────────────────────────────────────────────────
+def rl_init_session(p_spatial):
+    """Initialize a fresh RL env state in the session, using the same p_spatial as the human."""
+    if not RL_AVAILABLE:
+        return
+
+    params = {
+    'time_span': session.get('time_span'),
+    'daily_income': session.get('daily_income'),
+    'money_ini': session.get('money_ini'),
+    'return_mitigation': session.get('return_mitigation'),
+    'weight_invest': session.get('weight_invest'),
+    'p_property': session.get('p_property'),
+    'p_fatality': session.get('p_fatality'),
+    'p_injury': session.get('p_injury'),
+    'wealth_property': session.get('wealth_property'),
+    'injury_daily_inc_loss': session.get('injury_daily_inc_loss'),
+    'fatality_daily_inc_loss': session.get('fatality_daily_inc_loss'),
+    }
+
+    env = LandslideEnv(params=params)
+    env.reset()
+    env.p_spatial = p_spatial   # same location risk as human player
+    session['rl_state']         = env._get_state().tolist()
+    session['rl_day']           = 0
+    session['rl_daily_income']  = env.daily_income
+    session['rl_money_ini']     = env.money_ini
+    session['rl_final_money']   = env.final_money
+    session['rl_cumul_invest']  = 0.0
+    session['rl_income_cumul']  = 0.0
+    session['rl_last_p_ls']     = 0.0
+    session['rl_last_damage']   = 0.0
+    session['rl_log']           = []   # list of dicts, one per month
+
+
+def rl_step_session():
+    """Run one RL agent step using current session RL state. Stores result back in session."""
+    if not RL_AVAILABLE or session.get('rl_state') is None:
+        return
+    import numpy as np
+    from rl.landslide_env import LandslideEnv, DEFAULT_PARAMS, P_TEMPORAL
+
+    p  = DEFAULT_PARAMS
+    state = np.array(session['rl_state'], dtype=np.float32)
+    action_idx = _rl_agent.act(state, greedy=True)
+
+    invest_pct, buy_health, buy_life, buy_prop = LandslideEnv.ACTIONS[action_idx]
+    income     = session['rl_daily_income']
+    invest     = invest_pct * income
+    chk_one    = p['cost_health_insur']   if buy_health else 0.0
+    chk_two    = p['cost_life_insur']     if buy_life   else 0.0
+    chk_three  = p['cost_property_insur'] if buy_prop   else 0.0
+    total_spend = invest + chk_one + chk_two + chk_three
+    if total_spend > income:
+        invest = max(0.0, income - chk_one - chk_two - chk_three)
+        total_spend = invest + chk_one + chk_two + chk_three
+
+    session['rl_cumul_invest'] = session.get('rl_cumul_invest', 0.0) + invest
+    session['rl_income_cumul'] = session.get('rl_income_cumul', 0.0) + income
+
+    M            = p['return_mitigation']
+    w_i          = p['weight_invest']
+    inv_ratio    = session['rl_cumul_invest'] / (session['rl_income_cumul'] or 1)
+    smart_effect = min(1.0, 1.2 * inv_ratio)
+    p_investment = 1.0 - M * smart_effect
+    day_idx      = session.get('rl_day', 0)
+    p_temporal   = P_TEMPORAL[min(day_idx, len(P_TEMPORAL) - 1)]
+    p_spatial    = float(session.get('p_spatial', 0.5))
+    p_rain       = p_spatial * p_temporal
+    p_landslide  = p_rain * (1 - w_i) + p_investment * w_i
+
+    damage = 0.0
+    damage_flag = False
+    if p_landslide >= random.random():
+        damage_flag = True
+        if p['p_property'] >= random.random() and not buy_prop:
+            damage = p['wealth_property'] * session['rl_money_ini']
+            session['rl_money_ini'] = (1 - p['wealth_property']) * session['rl_money_ini']
+        if p['p_fatality'] >= random.random() and not buy_life:
+            session['rl_daily_income'] *= (1 - p['fatality_daily_inc_loss'])
+        if p['p_injury'] >= random.random() and not buy_health:
+            session['rl_daily_income'] *= (1 - p['injury_daily_inc_loss'])
+
+    session['rl_final_money'] = session.get('rl_final_money', 0.0) + (
+        session['rl_daily_income'] - total_spend - damage
+    )
+    session['rl_last_p_ls']   = round(p_landslide, 3)
+    session['rl_last_damage'] = 1 if damage_flag else 0
+    session['rl_day']         = day_idx + 1
+
+    log = session.get('rl_log', [])
+    log.append({
+        'month':        day_idx + 1,
+        'action':       RL_ACTION_LABELS[action_idx],
+        'invest':       round(invest, 1),
+        'insurance':    round(chk_one + chk_two + chk_three, 1),
+        'p_landslide':  round(p_landslide, 3),
+        'damage':       round(damage, 1),
+        'wealth':       round(session['rl_money_ini'], 1),
+        'final_money':  round(session['rl_final_money'], 1),
+    })
+    session['rl_log'] = log
+
+    # rebuild state vector for next step
+    tspan     = p['time_span']
+    max_inv   = p['daily_income'] * tspan
+    new_state = [
+        session['rl_day'] / tspan,
+        session['rl_daily_income'] / (p['daily_income'] or 1),
+        session['rl_money_ini']    / (p['money_ini'] or 1),
+        p_rain,
+        session['rl_cumul_invest'] / (max_inv or 1),
+        p_landslide,
+        1.0 if damage_flag else 0.0,
+    ]
+    session['rl_state'] = new_state
+
 
 # Routes
 @app.route('/')
@@ -239,6 +444,9 @@ def demographic():
 
             # store day_initial_temporal so later rows can use it
             session['day_initial_temporal'] = row.get('day_initial_temporal')
+
+            # initialise RL shadow agent with same spatial risk as human
+            rl_init_session(rand_spatial)
 
             # insert initial game row
             execute('''INSERT INTO game (rand_spatial,consent, id, day, weight_invest, daily_income, money_ini, return_mitigation, time_span, p_property, p_fatality, p_injury, p_spatial, dampening_factor_investment, wealth_property, injury_daily_inc_loss, fatality_daily_inc_loss, day_initial_temporal) 
@@ -462,6 +670,9 @@ def process():
             # leave session value as-is on error
             pass
 
+    # run RL agent shadow step for this same month
+    rl_step_session()
+
     session['process'] = True
     # choose redirect
     if p_landslide >= random.random():
@@ -524,7 +735,36 @@ def landslide_negative():
 
 @app.route('/end')
 def end():
-    return render_template('end.html')
+    human_wealth = session.get('final_money', 0)
+    rl_wealth    = session.get('rl_final_money', None)
+    rl_log       = session.get('rl_log', [])
+
+    # build human month-by-month log from existing session arrays
+    daychart     = session.get('daychart', [])
+    fm_array     = session.get('final_money_array', [])
+    pl_array     = session.get('p_landslide_array', [])
+    dmg_array    = session.get('damage_array', [])
+
+    human_log = []
+    for i in range(1, len(daychart)):
+        human_log.append({
+            'month':       i,
+            'wealth':      round(fm_array[i], 1)   if i < len(fm_array)  and fm_array[i]  is not None else '-',
+            'p_landslide': round(pl_array[i], 3)   if i < len(pl_array)  and pl_array[i]  is not None else '-',
+            'damage':      round(dmg_array[i], 1)  if i < len(dmg_array) and dmg_array[i] is not None else 0,
+        })
+
+    fm_array_clean   = [v if v is not None else 0 for v in fm_array]
+    rl_wealth_array  = [r['final_money'] for r in rl_log] if rl_log else []
+    return render_template('end.html',
+                           human_wealth=round(human_wealth, 1),
+                           rl_wealth=round(rl_wealth, 1) if rl_wealth is not None else None,
+                           rl_available=RL_AVAILABLE,
+                           rl_log=rl_log,
+                           human_log=human_log,
+                           daychart=daychart,
+                           fm_array=fm_array_clean,
+                           rl_wealth_array=rl_wealth_array)
 
 @app.route('/contact', methods=['GET','POST'])
 def contact():

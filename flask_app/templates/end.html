@@ -1,7 +1,123 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="jumbotron">
-  <h1>Congrats — End of Game</h1>
-  <p>Your final wealth: {{ session.final_money if session.final_money else 'N/A' }}</p>
+
+<div class="jumbotron text-center">
+  <h1>Game Over!</h1>
+  <p class="lead">Here's how you did — and how the AI agent would have played the same game.</p>
 </div>
+
+<!-- Wealth summary cards -->
+<div class="row text-center" style="margin-bottom:30px">
+  <div class="col-sm-6">
+    <div class="panel panel-primary">
+      <div class="panel-heading"><h3 class="panel-title">Your Final Wealth</h3></div>
+      <div class="panel-body"><h2>{{ human_wealth | int }} EC</h2></div>
+    </div>
+  </div>
+  {% if rl_available and rl_wealth is not none %}
+  <div class="col-sm-6">
+    <div class="panel panel-success">
+      <div class="panel-heading"><h3 class="panel-title">AI Agent Final Wealth</h3></div>
+      <div class="panel-body">
+        <h2>{{ rl_wealth | int }} EC</h2>
+        {% set diff = rl_wealth - human_wealth %}
+        {% if diff > 0 %}
+          <p class="text-success">AI earned <strong>{{ diff | int }} EC more</strong> than you.</p>
+        {% elif diff < 0 %}
+          <p class="text-danger">You earned <strong>{{ (diff * -1) | int }} EC more</strong> than the AI!</p>
+        {% else %}
+          <p>You and the AI finished with the same wealth.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Wealth over time chart -->
+{% if rl_available and rl_wealth_array %}
+<div id="wealth-chart" style="width:100%; height:400px; margin-bottom:30px;"></div>
+{% endif %}
+
+<!-- Side by side month log -->
+{% if rl_available and rl_log %}
+<h3>Month-by-Month Comparison</h3>
+<div class="table-responsive">
+  <table class="table table-bordered table-condensed table-hover">
+    <thead>
+      <tr class="active">
+        <th>Month</th>
+        <th colspan="3" class="text-center" style="background:#d9edf7">You</th>
+        <th colspan="4" class="text-center" style="background:#dff0d8">AI Agent</th>
+      </tr>
+      <tr class="active">
+        <th></th>
+        <th style="background:#d9edf7">P(Landslide)</th>
+        <th style="background:#d9edf7">Damage (EC)</th>
+        <th style="background:#d9edf7">Wealth (EC)</th>
+        <th style="background:#dff0d8">Action Taken</th>
+        <th style="background:#dff0d8">P(Landslide)</th>
+        <th style="background:#dff0d8">Damage (EC)</th>
+        <th style="background:#dff0d8">Wealth (EC)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in range(rl_log | length) %}
+        {% set h = human_log[i] if i < (human_log | length) else {} %}
+        {% set r = rl_log[i] %}
+        <tr>
+          <td><strong>{{ r.month }}</strong></td>
+          <!-- human -->
+          <td style="background:#eaf4fb">{{ h.p_landslide if h else '-' }}</td>
+          <td style="background:#eaf4fb">
+            {% if h and h.damage and h.damage != 0 %}
+              <span class="text-danger">{{ h.damage }}</span>
+            {% else %}0{% endif %}
+          </td>
+          <td style="background:#eaf4fb">{{ h.wealth if h else '-' }}</td>
+          <!-- ai -->
+          <td style="background:#f0faf0"><small>{{ r.action }}</small></td>
+          <td style="background:#f0faf0">{{ r.p_landslide }}</td>
+          <td style="background:#f0faf0">
+            {% if r.damage and r.damage != 0 %}
+              <span class="text-danger">{{ r.damage }}</span>
+            {% else %}0{% endif %}
+          </td>
+          <td style="background:#f0faf0">{{ r.final_money }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="text-center" style="margin-top:30px">
+  <a href="/" class="btn btn-primary btn-lg">Play Again</a>
+</div>
+
+
+{% if rl_available and rl_wealth_array %}
+<!-- <script src="/js/highcharts.js"></script> -->
+<script>
+window.onload = function () {
+  var months = {{ daychart | tojson | safe }};
+  var human  = {{ fm_array | tojson | safe }};
+  var ai     = {{ rl_wealth_array | tojson | safe }};
+
+  console.log('fm_array:', human);
+  console.log('rl_wealth_array:', ai);
+
+  $('#wealth-chart').highcharts({
+    chart: { type: 'line' },
+    title: { text: 'Property Wealth Over Time: You vs AI Agent' },
+    xAxis: { categories: months },
+    series: [
+      { name: 'You', data: human },
+      { name: 'AI Agent', data: ai }
+    ]
+  });
+};
+</script>
+{% endif %}
+
 {% endblock %}
